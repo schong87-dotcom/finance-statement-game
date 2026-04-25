@@ -658,10 +658,10 @@
         confirmLeave(
           '게임을 중단하고 나갈까요?',
           '진행 상황은 저장되지 않습니다. 타이머가 멈추고 선택 화면으로 돌아갑니다.',
-          () => { stopTimer(); window.App.goto('select'); }
+          () => { stopTimer(); window.App.goto('select', { mode: 'drag' }); }
         );
       } else {
-        stopTimer(); window.App.goto('select');
+        stopTimer(); window.App.goto('select', { mode: 'drag' });
       }
     });
 
@@ -684,7 +684,7 @@
     const btnAgain = document.getElementById('btn-play-again');
     if (btnAgain) btnAgain.addEventListener('click', () => { stopTimer(); initState(S.def.id); renderGame(); });
     const btnSelect = document.getElementById('btn-go-select');
-    if (btnSelect) btnSelect.addEventListener('click', () => { stopTimer(); window.App.goto('select'); });
+    if (btnSelect) btnSelect.addEventListener('click', () => { stopTimer(); window.App.goto('select', { mode: 'drag' }); });
 
     const btnClear = document.getElementById('btn-clear-history');
     if (btnClear) btnClear.addEventListener('click', () => {
@@ -729,7 +729,7 @@
   }
 
   GameView.render = function(gameId) {
-    if (!window.GAMES[gameId]) return window.App.goto('select');
+    if (!window.GAMES[gameId]) return window.App.goto('select', { mode: 'drag' });
     bindGlobalPointer();
     initState(gameId);
     renderGame();
