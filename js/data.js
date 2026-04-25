@@ -83,6 +83,39 @@ window.GAMES = {
 
 window.GAME_ORDER = ['income-statement', 'balance-sheet-1', 'balance-sheet-2'];
 
+// 게임 모드 정의 (드래그앤드롭 / 쓰기게임)
+window.GAME_MODES = {
+  drag: {
+    id: 'drag',
+    title: '드래그앤드롭',
+    subtitle: '항목을 끌어다 정해진 순서·위치에 배치하세요',
+    description: '드래그 또는 탭으로 항목을 옮겨 재무제표를 완성합니다.',
+    icon: 'move',
+    bg: 'bg-blue-100', text: 'text-blue-600',
+    border: 'border-blue-200', hoverBorder: 'hover:border-blue-400',
+  },
+  write: {
+    id: 'write',
+    title: '쓰기게임',
+    subtitle: '각 항목명을 직접 타이핑해서 완성하세요',
+    description: '빈칸에 항목명을 키보드로 입력합니다. 정확히 일치하면 다음 칸으로 자동 이동.',
+    icon: 'keyboard',
+    bg: 'bg-amber-100', text: 'text-amber-600',
+    border: 'border-amber-200', hoverBorder: 'hover:border-amber-400',
+  },
+};
+window.MODE_ORDER = ['drag', 'write'];
+
+// 쓰기게임용 게임 ID는 'write:'를 prefix로 사용 (드래그 게임 기록과 분리)
+window.WRITE_PREFIX = 'write:';
+window.writeGameId = function(baseId) { return window.WRITE_PREFIX + baseId; };
+window.parseGameId = function(id) {
+  if (id && id.indexOf(window.WRITE_PREFIX) === 0) {
+    return { mode: 'write', baseId: id.slice(window.WRITE_PREFIX.length) };
+  }
+  return { mode: 'drag', baseId: id };
+};
+
 // 톤별 색상 매핑
 window.TONE = {
   blue:   { bg: 'bg-blue-100',   text: 'text-blue-600',   ring: 'ring-blue-200',   softBg: 'bg-blue-50',   border: 'border-blue-200',   hoverBorder: 'hover:border-blue-300',   chip: 'bg-blue-50 text-blue-700 border-blue-200' },
