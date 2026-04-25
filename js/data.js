@@ -10,7 +10,7 @@ window.GAMES = {
     hasLevels: false,
     hint: '항목을 좌측에서 우측으로 드래그하세요.\n시작 버튼을 누르면 타이머가 시작됩니다.',
     items: [
-      { name: '매출액',        level: 0, accepts: ['매출액', '매출'] },
+      { name: '매출액',        level: 0 },
       { name: '매출원가',      level: 0 },
       { name: '매출총이익',    level: 0 },
       { name: '판매비와관리비', level: 0 },
