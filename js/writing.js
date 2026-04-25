@@ -50,32 +50,28 @@
   function onInputChange(idx, value) {
     if (!S || !S.started || S.finished || S.filled[idx]) return;
     const v = (value || '').trim();
-    const target = S.def.items[idx].name;
+    const item = S.def.items[idx];
+    const accepts = item.accepts || [item.name];
     const inp = document.querySelector(`input[data-write-idx="${idx}"]`);
     if (!inp) return;
 
-    if (v === target) {
+    if (accepts.includes(v)) {
       S.filled[idx] = true;
-      inp.value = target;
+      inp.value = item.name;  // 잠근 후엔 정식 명칭으로 표시 (학습 목적)
       inp.readOnly = true;
       inp.classList.remove('bg-white','border-gray-200','focus:border-blue-500','focus:ring-blue-100','border-red-300','bg-red-50');
       inp.classList.add('bg-emerald-50','border-emerald-400','text-emerald-700','font-bold');
-      // 진행 표시 갱신
       const countEl = document.getElementById('progress-count');
       if (countEl) {
         const n = S.filled.filter(x=>x).length;
         countEl.textContent = `${n} / ${S.def.items.length}`;
       }
-      // 다음 빈 칸으로 포커스 이동
       focusNextEmpty(idx);
-      // 완료 검사
-      if (S.filled.every(x => x)) {
-        finishGame();
-      }
+      if (S.filled.every(x => x)) finishGame();
     } else {
-      // 길이가 정답과 같은데 다르면 잘못 입력 → 빨간 테두리 살짝 (편집은 가능)
-      // 길이가 짧으면 입력 중 → 중립
-      if (v.length >= target.length) {
+      // 가장 긴 정답 길이 이상으로 입력했는데 일치 안 하면 잘못 입력 → 빨간 테두리 (수정 가능)
+      const maxLen = Math.max.apply(null, accepts.map(a => a.length));
+      if (v.length >= maxLen) {
         inp.classList.add('border-red-300','bg-red-50');
         inp.classList.remove('border-gray-200');
       } else {
