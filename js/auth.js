@@ -1,42 +1,47 @@
-// 인증: 이름 + 비밀번호 기반 로컬 저장
+// 인증: 구글 로그인(Google Identity Services) 기반, 세션은 로컬 저장
 (function(){
-  const USERS_KEY = 'fsg.users';
   const SESSION_KEY = 'fsg.session';
 
-  function loadUsers() {
-    try { return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); }
-    catch { return {}; }
+  // GIS가 돌려주는 credential(JWT)의 payload를 디코딩 (서명 검증은 하지 않음 — 클라이언트 전용 학습 앱)
+  function decodeJwtPayload(jwt) {
+    const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+    );
+    return JSON.parse(json);
   }
-  function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
 
   window.Auth = {
+    CLIENT_ID: '450177760064-blrki3gdhcb8d9bqf1q3v2oifoo55d13.apps.googleusercontent.com',
     getUser() {
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         return raw ? JSON.parse(raw) : null;
       } catch { return null; }
     },
-    signIn(name, password) {
-      name = (name || '').trim();
-      if (!name) return { ok:false, reason:'이름을 입력해주세요.' };
-      if (!password || password.length < 6) return { ok:false, reason:'비밀번호는 6자리 이상이어야 합니다.' };
-      const users = loadUsers();
-      const existing = users[name];
-      if (existing) {
-        if (existing.password !== password) {
-          return { ok:false, reason:'비밀번호가 일치하지 않습니다.' };
-        }
-      } else {
-        // 계정이 없으면 자동 생성 (회원가입 탭이 제거되었으므로 로그인이 곧 가입 역할)
-        users[name] = { password, createdAt: Date.now() };
-        saveUsers(users);
+    // GIS 콜백에서 받은 credential로 로그인 처리
+    signInWithGoogle(credential) {
+      try {
+        const p = decodeJwtPayload(credential);
+        if (!p || !p.email) return { ok:false, reason:'구글 계정 정보를 읽지 못했습니다.' };
+        const session = {
+          name: p.name || p.email.split('@')[0],
+          email: p.email,
+          picture: p.picture || null,
+          loggedInAt: Date.now(),
+        };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        return { ok:true, session };
+      } catch {
+        return { ok:false, reason:'로그인 처리 중 오류가 발생했습니다.' };
       }
-      const session = { name, loggedInAt: Date.now() };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      return { ok:true, session };
     },
     signOut() {
       localStorage.removeItem(SESSION_KEY);
+      // 원탭 자동 재로그인 방지
+      if (window.google && google.accounts && google.accounts.id) {
+        try { google.accounts.id.disableAutoSelect(); } catch {}
+      }
     },
   };
 
