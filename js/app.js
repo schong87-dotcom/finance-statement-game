@@ -9,6 +9,18 @@
     activeView = null;
   }
 
+  // GIS 초기화는 1회만 수행 (재로그인 화면에서 중복 initialize 경고 방지)
+  let gisInitialized = false;
+  function onGoogleCredential(response) {
+    const res = Auth.signInWithGoogle(response.credential);
+    if (!res.ok) {
+      UI.toast(res.reason, 'error');
+      return;
+    }
+    UI.toast('환영합니다, ' + res.session.name + '님!', 'success', 1200);
+    setTimeout(() => goto('mode'), 300);
+  }
+
   // --- 로그인 화면 ---
   function renderLogin() {
     root.innerHTML = `
@@ -19,7 +31,7 @@
               ${UI.icon('chartApp','w-9 h-9')}
             </div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">재무제표 학습 게임</h1>
-            <p class="text-sm text-gray-500 mt-1">이름과 비밀번호로 시작하세요</p>
+            <p class="text-sm text-gray-500 mt-1">구글 계정으로 시작하세요</p>
           </div>
 
           <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
@@ -29,61 +41,49 @@
               </div>
             </div>
 
-            <form id="login-form" class="p-6 space-y-4" novalidate>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">이름</label>
-                <input id="inp-name" type="text" autocomplete="username" placeholder="한글 이름 입력"
-                  class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" />
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">비밀번호</label>
-                <div class="relative">
-                  <input id="inp-pwd" type="password" autocomplete="current-password" placeholder="6자리 이상"
-                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 pr-10 text-sm focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all" />
-                  <button type="button" id="btn-pwd-toggle" tabindex="-1"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-700 rounded-md">
-                    ${UI.icon('eye','w-4 h-4')}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2.5 rounded-lg shadow-sm shadow-blue-200 transition-all">
-                로그인
-              </button>
-            </form>
+            <div class="p-6 flex flex-col items-center gap-3">
+              <div id="google-btn" class="min-h-[44px]"></div>
+              <p id="google-btn-status" class="text-xs text-gray-400 hidden">구글 로그인 버튼을 불러오는 중...</p>
+            </div>
           </div>
 
           <p class="text-center text-[11px] text-gray-400 mt-5">
-            ※ 최초 로그인 시 자동으로 계정이 생성됩니다
+            ※ 게임 기록은 이 기기의 브라우저에 저장됩니다
           </p>
         </div>
       </div>
     `;
 
-    const form = document.getElementById('login-form');
-    const nameInp = document.getElementById('inp-name');
-    const pwdInp = document.getElementById('inp-pwd');
-    const toggleBtn = document.getElementById('btn-pwd-toggle');
-
-    toggleBtn.addEventListener('click', () => {
-      const isPwd = pwdInp.type === 'password';
-      pwdInp.type = isPwd ? 'text' : 'password';
-      toggleBtn.innerHTML = UI.icon(isPwd ? 'eyeOff' : 'eye', 'w-4 h-4');
-    });
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const res = Auth.signIn(nameInp.value, pwdInp.value);
-      if (!res.ok) {
-        UI.toast(res.reason, 'error');
+    // GIS 스크립트(async)가 아직 로드 전일 수 있어 폴링 후 버튼 렌더링
+    const statusEl = document.getElementById('google-btn-status');
+    let tries = 0;
+    (function renderGoogleButton() {
+      const holder = document.getElementById('google-btn');
+      if (!holder) return; // 이미 다른 화면으로 이동함
+      if (window.google && google.accounts && google.accounts.id) {
+        if (!gisInitialized) {
+          google.accounts.id.initialize({
+            client_id: Auth.CLIENT_ID,
+            callback: onGoogleCredential,
+          });
+          gisInitialized = true;
+        }
+        google.accounts.id.renderButton(holder, {
+          type: 'standard', theme: 'outline', size: 'large',
+          text: 'signin_with', shape: 'pill', logo_alignment: 'left', width: 280,
+        });
+        statusEl.classList.add('hidden');
         return;
       }
-      UI.toast('환영합니다, ' + res.session.name + '님!', 'success', 1200);
-      setTimeout(() => goto('mode'), 300);
-    });
-
-    setTimeout(() => nameInp.focus(), 50);
+      tries += 1;
+      if (tries === 5) statusEl.classList.remove('hidden');
+      if (tries > 50) {
+        statusEl.textContent = '구글 로그인을 불러오지 못했습니다. 새로고침 해주세요.';
+        statusEl.classList.remove('hidden');
+        return;
+      }
+      setTimeout(renderGoogleButton, 200);
+    })();
   }
 
   // 모드별 모든 게임의 총 기록 횟수와 최고 기록을 합산
