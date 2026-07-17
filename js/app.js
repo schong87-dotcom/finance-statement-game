@@ -19,7 +19,7 @@
               ${UI.icon('chartApp','w-9 h-9')}
             </div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">재무제표 학습 게임</h1>
-            <p class="text-sm text-gray-500 mt-1">이름과 비밀번호로 시작하세요</p>
+            <p class="text-sm text-gray-500 mt-1">이름과 비밀번호 또는 구글 계정으로 시작하세요</p>
           </div>
 
           <div class="bg-white rounded-2xl shadow-xl ring-1 ring-gray-100 overflow-hidden">
@@ -52,6 +52,16 @@
                 로그인
               </button>
             </form>
+
+            <div class="px-6 pb-6">
+              <div class="flex items-center gap-3">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="text-[11px] text-gray-400">또는</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <div id="google-btn" class="mt-4 flex justify-center"></div>
+              <p id="google-hint" class="hidden text-center text-[11px] text-gray-400 mt-2"></p>
+            </div>
           </div>
 
           <p class="text-center text-[11px] text-gray-400 mt-5">
@@ -83,7 +93,58 @@
       setTimeout(() => goto('mode'), 300);
     });
 
+    setupGoogleLogin();
     setTimeout(() => nameInp.focus(), 50);
+  }
+
+  // ID 토큰(JWT)의 payload를 디코딩 (base64url → UTF-8 JSON)
+  function decodeJwtPayload(token) {
+    try {
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const json = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      return JSON.parse(json);
+    } catch { return null; }
+  }
+
+  // 구글 로그인 버튼 초기화 (GIS 스크립트가 늦게 로드될 수 있어 폴링)
+  function setupGoogleLogin() {
+    const btnHost = document.getElementById('google-btn');
+    const hint = document.getElementById('google-hint');
+    const showHint = (msg) => { hint.textContent = msg; hint.classList.remove('hidden'); };
+
+    if (!window.GOOGLE_CLIENT_ID) {
+      showHint('구글 로그인을 사용하려면 index.html의 GOOGLE_CLIENT_ID를 설정하세요.');
+      return;
+    }
+    if (location.protocol === 'file:') {
+      showHint('구글 로그인은 로컬 파일 모드에서 동작하지 않습니다. http 서버로 실행해주세요.');
+      return;
+    }
+
+    let tries = 0;
+    (function init() {
+      if (!(window.google && google.accounts && google.accounts.id)) {
+        if (++tries < 50) return setTimeout(init, 100);
+        showHint('구글 로그인 스크립트를 불러오지 못했습니다.');
+        return;
+      }
+      google.accounts.id.initialize({
+        client_id: window.GOOGLE_CLIENT_ID,
+        callback: (resp) => {
+          const payload = decodeJwtPayload(resp.credential);
+          const res = Auth.signInWithGoogle({ name: payload && payload.name, email: payload && payload.email });
+          if (!res.ok) {
+            UI.toast(res.reason, 'error');
+            return;
+          }
+          UI.toast('환영합니다, ' + res.session.name + '님!', 'success', 1200);
+          setTimeout(() => goto('mode'), 300);
+        },
+      });
+      google.accounts.id.renderButton(btnHost, {
+        theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'ko', width: 300,
+      });
+    })();
   }
 
   // 모드별 모든 게임의 총 기록 횟수와 최고 기록을 합산

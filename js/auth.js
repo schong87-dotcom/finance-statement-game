@@ -35,6 +35,20 @@
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       return { ok:true, session };
     },
+    // 구글 로그인: GIS ID 토큰에서 추출한 프로필로 세션 생성 (최초 로그인 시 자동 계정 생성)
+    signInWithGoogle(profile) {
+      const email = (profile.email || '').trim();
+      if (!email) return { ok:false, reason:'구글 계정 정보를 가져오지 못했습니다.' };
+      const users = loadUsers();
+      const key = 'google:' + email; // 기존 이름 키와 충돌하지 않도록 접두사 사용
+      if (!users[key]) {
+        users[key] = { provider:'google', email, createdAt: Date.now() };
+        saveUsers(users);
+      }
+      const session = { name: profile.name || email, email, provider:'google', loggedInAt: Date.now() };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      return { ok:true, session };
+    },
     signOut() {
       localStorage.removeItem(SESSION_KEY);
     },

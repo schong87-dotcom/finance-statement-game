@@ -17,6 +17,11 @@ python3 -m http.server 5173
 ## 주요 기능
 
 - **로그인**: 이름 + 비밀번호(6자리 이상). 최초 로그인 시 자동 계정 생성.
+- **구글 로그인**: Google Identity Services 기반. 사용하려면 아래 설정이 필요합니다.
+  1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) > 사용자 인증 정보 > OAuth 클라이언트 ID(웹 애플리케이션) 생성
+  2. 승인된 JavaScript 출처에 `http://localhost:5173`, `http://127.0.0.1:5173` 추가
+  3. 발급받은 클라이언트 ID를 `index.html`의 `window.GOOGLE_CLIENT_ID`에 입력
+  - 클라이언트 ID 미설정 또는 `file://`로 열었을 때는 버튼 대신 안내 문구가 표시됩니다.
 - **게임 선택**: 세 가지 게임 카드. 각 게임의 개인 최고 기록이 카드에 노출됩니다.
 - **손익계산서 게임**: 10개 항목의 올바른 순서 맞추기
 - **재무상태표 게임 1**: 11개 항목을 2단계 수준에 맞게 배치
