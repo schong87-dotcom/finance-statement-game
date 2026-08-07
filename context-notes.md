@@ -151,3 +151,20 @@ secret 키는 RLS를 우회하는 게 정상 동작이다. **키는 `name`이 �
   RLS를 publishable 키로 실측 검증(조회 0행/삽입 401/삭제 0건/타인 user_id 삽입 403).
 - 2026-08-08: 로컬 브라우저로 전체 흐름 검증. 쓰기게임 1판 실제 완주해 서버 저장까지 확인.
   기존 기록 이관도 실측(다른 사람 기록은 안 딸려옴). 테스트 계정 전부 삭제.
+
+## 2026-08-08 추가 — GitHub 자동 배포 연결
+
+Vercel 프로젝트를 GitHub에 연결해 push만으로 배포되게 바꿨다. 순서는 이랬다.
+
+1. Vercel 계정 > Settings > Authentication 에서 GitHub 로그인 연결 추가
+2. Vercel GitHub 앱을 저장소에 설치 (**`finance-statement-game` 하나만** 선택,
+   기본값인 "All repositories"는 쓰지 않았다)
+3. `vercel git connect`
+
+막혔던 지점 두 개.
+- Vercel의 GitHub 연결 버튼은 **팝업 창**을 띄우는데 자동화 도구가 팝업을 제어하지 못했다.
+  `window.open`을 후킹해 URL만 가로챈 뒤 같은 탭에서 열어 해결했다.
+- GitHub이 sudo mode 재인증(2FA)을 요구했다. 이건 본인만 할 수 있어 사용자가 직접 처리했다.
+  (코드를 대신 입력하면 2FA를 두는 의미가 없다.)
+
+앞으로는 `git push origin main` 만으로 배포된다. `vercel --prod` 도 그대로 쓸 수 있다.
