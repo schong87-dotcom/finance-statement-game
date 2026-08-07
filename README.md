@@ -15,8 +15,22 @@ python3 -m http.server 5173
 로그인·기록 저장이 Supabase를 거치므로 `index.html`을 파일로 직접 여는 방식(`file://`)은 쓰지 마세요.
 반드시 HTTP로 서빙해야 합니다.
 
+## 배포
+
 배포 주소는 https://finance-statement-game.vercel.app 입니다.
-`main` 브랜치에 push하면 Vercel이 자동으로 배포합니다.
+
+이 Vercel 프로젝트는 **GitHub에 연결되어 있지 않습니다.** push만으로는 배포되지 않고,
+아래 명령을 직접 실행해야 합니다.
+
+```bash
+vercel --prod
+```
+
+push는 소스 보관용이고, 배포는 CLI가 담당합니다. 둘 다 해야 저장소와 서비스가 같아집니다.
+
+자동 배포를 원하면 Vercel 대시보드에서 GitHub 로그인 연결을 추가한 뒤
+프로젝트 Settings > Git 에서 저장소를 연결하면 됩니다.
+(CLI `vercel git connect`는 로그인 연결이 없어 실패합니다.)
 
 ## 주요 기능
 

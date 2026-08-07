@@ -59,13 +59,15 @@
 - [x] `Auth.signInWithGoogle()`을 Supabase `signInWithOAuth`로 교체
 - [x] 로그인 화면 구글 버튼을 자체 마크업으로 교체
 - [x] `userFromSession()`에 구글 프로필 이름(full_name/name) 폴백 추가
-- [ ] Google Cloud Console에 Supabase 콜백 URL 등록 (**사용자 작업**)
+- [x] Google Cloud Console에 Supabase 콜백 URL 등록
       `https://cgkocnezpitydxrflxom.supabase.co/auth/v1/callback`
-- [ ] Supabase에 구글 provider 설정 (client ID + secret) — **client secret 필요**
-- [ ] 구글 로그인 실측 — 로그인 → 게임 완주 → 기록 저장
+- [x] Supabase에 구글 provider 설정 (client ID + 신규 secret)
+- [x] 구글 로그인 실측 — 로그인 성공, 계정 생성 확인
 
 ## 8. 배포
-- [ ] 커밋 (의미 단위 분리)
-- [ ] `git push` → Vercel 자동 배포
-- [ ] 프로덕션 URL 실측 — 이름 로그인 + 구글 로그인 + 게임 완주 + 기록 저장
+- [x] 커밋 (의미 단위 분리)
+- [x] `vercel --prod` 로 배포 (GitHub 자동 배포는 연결돼 있지 않음 — 확인함)
+- [x] 프로덕션 실측 — 이름 로그인 + 게임 완주 + 서버 저장(8초) 확인
+- [x] 구글 로그인 실측 — 세션 생성·계정 등록 확인 (provider=google)
+- [ ] 구글 계정으로 게임 1판 — 기록 저장까지 확인 (사용자 작업)
 - [x] README 갱신

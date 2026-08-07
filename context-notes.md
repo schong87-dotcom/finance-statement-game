@@ -130,7 +130,15 @@ push 단계에서 거부당해서야 알았다. 거부되지 않았거나 force�
 프로덕션에서 돌아가던 기능이 조용히 사라졌을 것이다.
 **파일을 재작성하기 전에 `git fetch`부터 하고 원격과의 차이를 본다.**
 
-**3. API 키 두 개가 같은 이름이라 덮어썼다.**
+**3. Vercel이 GitHub에 연결돼 있다고 멋대로 단정했다.**
+`.vercel/project.json`이 있고 GitHub 원격도 있길래 "push하면 자동 배포"라고 README에 썼다.
+확인해 보니 **연결돼 있지 않았다.** 과거 배포는 전부 CLI로 한 것이었고(`vercel ls`의 Duration 3s,
+git 소스 없음), push해도 프로덕션은 21일 전 버전 그대로였다.
+배포된 파일을 직접 curl로 열어보고서야 알았다.
+**배포는 "했다"가 아니라 "배포된 파일에서 새 코드를 확인했다"로 검증한다.**
+이 프로젝트는 `vercel --prod`를 직접 실행해야 한다.
+
+**4. API 키 두 개가 같은 이름이라 덮어썼다.**
 `/v1/projects/{ref}/api-keys` 응답에서 `publishable`과 `secret`의 `name`이 **둘 다 `default`**다.
 name으로 파일을 저장했더니 secret이 publishable을 덮어썼고, 그 상태로 RLS를 테스트해서
 "anon이 남의 데이터를 다 읽는다"는 가짜 보안 결함을 만들어냈다.
