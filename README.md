@@ -21,6 +21,9 @@ python3 -m http.server 5173
 ## 주요 기능
 
 - **로그인**: 이름 + 비밀번호(6자리 이상). 최초 로그인 시 자동 계정 생성.
+- **구글 로그인**: Supabase OAuth 기반. 클라이언트 ID·시크릿은 Supabase 대시보드에 두며
+  앱 코드에는 들어가지 않습니다. `file://`로 열었을 때는 버튼 대신 안내 문구가 표시됩니다.
+  - 구글 계정과 이름+비밀번호 계정은 **별개 계정**입니다. 기록이 합쳐지지 않습니다.
 - **게임 선택**: 세 가지 게임 카드. 각 게임의 개인 최고 기록이 카드에 노출됩니다.
 - **손익계산서 게임**: 10개 항목의 올바른 순서 맞추기
 - **재무상태표 게임 1**: 11개 항목을 2단계 수준에 맞게 배치
@@ -63,6 +66,11 @@ python3 -m http.server 5173
 `u<hex>@fsg.local` 형태의 이메일로 바꿔 Supabase Auth에 넘깁니다.
 같은 이름은 항상 같은 계정으로 이어집니다.
 실제 이메일이 아니므로 **비밀번호 찾기는 불가능합니다** (기존과 동일한 제약).
+
+구글 로그인은 Supabase의 구글 provider를 씁니다. 설정 위치는 두 곳입니다.
+- Supabase 대시보드 > Authentication > Sign In / Providers > Google — 클라이언트 ID·시크릿
+- Google Cloud Console > 사용자 인증 정보 > 승인된 리디렉션 URI
+  → `https://cgkocnezpitydxrflxom.supabase.co/auth/v1/callback`
 
 ## 원본 대비 변경 사항
 

@@ -29,7 +29,9 @@
   function userFromSession(s) {
     if (!s || !s.user) return null;
     const meta = s.user.user_metadata || {};
-    return { name: meta.display_name || '', id: s.user.id };
+    // 이름+비밀번호 계정은 display_name, 구글 계정은 구글이 채워주는 full_name/name을 쓴다
+    const name = meta.display_name || meta.full_name || meta.name || (s.user.email || '').split('@')[0];
+    return { name, id: s.user.id };
   }
 
   // 현재 사용자의 전체 기록을 읽어 메모리 캐시에 적재. RLS가 본인 행만 돌려준다.
@@ -142,6 +144,21 @@
       await migrateLegacy(name, session.user.id);
       await hydrate();
       return { ok:true, session: { name } };
+    },
+
+    // 구글 로그인: Supabase OAuth로 구글에 다녀온다. 성공하면 이 페이지로 되돌아오고,
+    // 돌아온 뒤의 세션 처리는 restore()가 맡는다.
+    async signInWithGoogle() {
+      try {
+        const { error } = await client().auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: location.origin + location.pathname },
+        });
+        if (error) return { ok:false, reason: error.message || '구글 로그인에 실패했습니다.' };
+        return { ok:true, redirecting:true };
+      } catch (e) {
+        return { ok:false, reason: e.message || '구글 로그인에 실패했습니다.' };
+      }
     },
 
     async signOut() {

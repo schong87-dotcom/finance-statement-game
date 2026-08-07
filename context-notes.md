@@ -84,6 +84,28 @@ Supabase anon(publishable) key는 **설계상 공개되는 키**이고, 실제 �
 `fsg.migrated.<user_id>` 마커로 중복 이관을 막는다.
 원본 localStorage 데이터는 지우지 않는다 (되돌릴 여지를 남김).
 
+## 결정 5 — 구글 로그인을 GIS에서 Supabase OAuth로 갈아탄다
+
+2026-07-17에 이미 구글 로그인이 들어가 있었다 (커밋 `60b798b`, `4f32ca5`, `5a563c8`).
+Google Identity Services(GIS)로 ID 토큰을 받아 브라우저에서 payload만 디코딩하고,
+세션을 localStorage에 넣는 방식이었다. 백엔드가 없던 시절엔 타당한 선택이었다.
+
+이번에 Supabase가 들어오면서 그대로 둘 수 없게 됐다.
+새 `Records`는 **Supabase 세션이 있어야** 서버에 기록을 쓴다.
+GIS로 로그인한 사용자는 Supabase 세션이 없으므로 `save()`의 `uid`가 null이 되어
+기록이 화면에만 보이고 서버에는 한 줄도 안 남는다. 조용히 깨지는 종류라 더 나쁘다.
+
+그래서 GIS를 걷어내고 `supabase.auth.signInWithOAuth({ provider: 'google' })`로 바꿨다.
+- 인증 체계가 하나가 되어 구글 로그인 사용자도 기록이 동일하게 쌓인다
+- 클라이언트 ID/시크릿은 Supabase가 들고 있고 `index.html`에서는 사라진다
+- 토큰 검증을 브라우저가 아니라 Supabase가 한다 (기존엔 서버 검증이 아예 없었다)
+
+표시 이름은 구글이 주는 `full_name`/`name`을 쓴다.
+이름+비밀번호 계정의 `display_name`과 같은 자리에서 읽도록 `userFromSession()`에 폴백을 뒀다.
+
+주의. **구글 계정과 이름+비밀번호 계정은 별개 계정이다.** 같은 사람이 두 방식으로 로그인하면
+기록이 따로 쌓인다. 통합하려면 계정 연결(identity linking)이 필요한데 이번 범위 밖이다.
+
 ## 만들어진 리소스
 
 - Supabase 프로젝트 `finance-statement-game`
@@ -101,7 +123,14 @@ DB 비밀번호는 이 세션의 스크래치패드에만 있고 저장소에는
 `/auth/v1/health`를 apikey 헤더 없이 호출하면 401이 온다. 이걸 "아직 준비 안 됨"으로 오해해
 8분을 폴링했다. 실제로는 생성 직후부터 ACTIVE_HEALTHY였다. 401은 인증 누락이지 미준비가 아니다.
 
-**2. API 키 두 개가 같은 이름이라 덮어썼다.**
+**2. 원격이 3커밋 앞서 있는 걸 확인 안 하고 작업을 시작했다.**
+로컬은 `c78b4dd`였는데 원격 `main`은 `5a563c8`이었다. 그 사이에 구글 로그인이 들어가 있었고,
+하필 내가 통째로 재작성한 `js/auth.js`·`js/app.js`·`index.html`을 건드리는 커밋이었다.
+push 단계에서 거부당해서야 알았다. 거부되지 않았거나 force로 밀었으면
+프로덕션에서 돌아가던 기능이 조용히 사라졌을 것이다.
+**파일을 재작성하기 전에 `git fetch`부터 하고 원격과의 차이를 본다.**
+
+**3. API 키 두 개가 같은 이름이라 덮어썼다.**
 `/v1/projects/{ref}/api-keys` 응답에서 `publishable`과 `secret`의 `name`이 **둘 다 `default`**다.
 name으로 파일을 저장했더니 secret이 publishable을 덮어썼고, 그 상태로 RLS를 테스트해서
 "anon이 남의 데이터를 다 읽는다"는 가짜 보안 결함을 만들어냈다.

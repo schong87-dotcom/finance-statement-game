@@ -52,8 +52,20 @@
 - [x] 콘솔 에러 확인 — 신규 계정 첫 로그인 시 나오는 400 1건은 정상 (없는 계정 로그인 시도 후 가입으로 넘어가는 설계)
 - [x] 테스트 계정 정리 (users 0, records 0)
 
-## 7. 배포
+## 7. 구글 로그인 통합 (원격에 이미 있던 작업 흡수)
+- [x] 원격 `origin/main`의 구글 로그인 커밋 3개 확인 (`60b798b`, `4f32ca5`, `5a563c8`)
+- [x] 병합 및 충돌 해소 (`js/auth.js`, `checklist.md`, `context-notes.md`)
+- [x] GIS(Google Identity Services) 코드 제거 — index.html 스크립트, JWT 디코딩, GOOGLE_CLIENT_ID
+- [x] `Auth.signInWithGoogle()`을 Supabase `signInWithOAuth`로 교체
+- [x] 로그인 화면 구글 버튼을 자체 마크업으로 교체
+- [x] `userFromSession()`에 구글 프로필 이름(full_name/name) 폴백 추가
+- [ ] Google Cloud Console에 Supabase 콜백 URL 등록 (**사용자 작업**)
+      `https://cgkocnezpitydxrflxom.supabase.co/auth/v1/callback`
+- [ ] Supabase에 구글 provider 설정 (client ID + secret) — **client secret 필요**
+- [ ] 구글 로그인 실측 — 로그인 → 게임 완주 → 기록 저장
+
+## 8. 배포
 - [ ] 커밋 (의미 단위 분리)
 - [ ] `git push` → Vercel 자동 배포
-- [ ] 프로덕션 URL 실측 — 로그인 + 게임 완주 + 기록 저장
-- [ ] README 갱신
+- [ ] 프로덕션 URL 실측 — 이름 로그인 + 구글 로그인 + 게임 완주 + 기록 저장
+- [x] README 갱신
