@@ -7,7 +7,9 @@
 Vercel 배포는 이미 되어 있었다. 확인한 사실.
 - Vercel 프로젝트 `finance-statement-game`, 프로덕션 URL `https://finance-statement-game.vercel.app`
 - `.vercel/project.json`에 `projectId: prj_c2R2sLiP4wimlkpQF5Dyfdl5liq8` 링크됨
-- GitHub 원격 `schong87-dotcom/finance-statement-game` (PUBLIC), push하면 자동 배포
+- GitHub 원격 `schong87-dotcom/finance-statement-game` (PUBLIC)
+  ※ 이때는 "push하면 자동 배포"라고 적었는데 틀렸다. 아래 삽질 기록 3번 참고.
+    (작업 막바지에 자동 배포를 실제로 연결했다 — 맨 아래 절 참고)
 
 따라서 이번 작업의 실질은 "배포"가 아니라 **저장소를 localStorage에서 Supabase로 옮기는 것**이다.
 
@@ -136,7 +138,17 @@ push 단계에서 거부당해서야 알았다. 거부되지 않았거나 force�
 git 소스 없음), push해도 프로덕션은 21일 전 버전 그대로였다.
 배포된 파일을 직접 curl로 열어보고서야 알았다.
 **배포는 "했다"가 아니라 "배포된 파일에서 새 코드를 확인했다"로 검증한다.**
-이 프로젝트는 `vercel --prod`를 직접 실행해야 한다.
+(이후 자동 배포를 실제로 연결했다 — 맨 아래 절 참고.)
+
+덧붙여, 자동 배포가 붙었는지 확인할 때도 같은 실수를 반복할 뻔했다.
+배포된 `README.md`를 curl로 받아 비교하려 했는데 Vercel이 마크다운을 서빙하지 않아 404였고,
+7분간 "실패"로 오독했다. 확실한 근거는 배포 레코드의 출처 필드다.
+
+```bash
+# 최신 프로덕션 배포가 git에서 왔는지 확인 (src=git 이어야 자동 배포)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.vercel.com/v6/deployments?projectId=<id>&target=production&limit=3"
+```
 
 **4. API 키 두 개가 같은 이름이라 덮어썼다.**
 `/v1/projects/{ref}/api-keys` 응답에서 `publishable`과 `secret`의 `name`이 **둘 다 `default`**다.
@@ -168,3 +180,9 @@ Vercel 프로젝트를 GitHub에 연결해 push만으로 배포되게 바꿨다.
   (코드를 대신 입력하면 2FA를 두는 의미가 없다.)
 
 앞으로는 `git push origin main` 만으로 배포된다. `vercel --prod` 도 그대로 쓸 수 있다.
+
+검증 결과 (2026-08-08).
+```
+dpl_8TERyPm6...  src=git  sha=d74c29f  chore: GitHub 자동 배포 연결   ← 자동
+dpl_2bjdBhjq...  src=cli  sha=b33df47  docs: Vercel 배포 방식을 ...   ← 수동
+```
