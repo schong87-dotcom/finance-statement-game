@@ -72,10 +72,23 @@
       toggleBtn.innerHTML = UI.icon(isPwd ? 'eyeOff' : 'eye', 'w-4 h-4');
     });
 
-    form.addEventListener('submit', (e) => {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const res = Auth.signIn(nameInp.value, pwdInp.value);
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-60');
+      submitBtn.textContent = '로그인 중…';
+      let res;
+      try {
+        res = await Auth.signIn(nameInp.value, pwdInp.value);
+      } catch (err) {
+        console.error('[fsg] 로그인 오류', err);
+        res = { ok:false, reason:'서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.' };
+      }
       if (!res.ok) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-60');
+        submitBtn.textContent = '로그인';
         UI.toast(res.reason, 'error');
         return;
       }
@@ -169,7 +182,7 @@
         message: '정말 로그아웃 하시겠어요?',
         buttons: [
           { label: '취소', variant:'secondary' },
-          { label: '로그아웃', variant:'primary', onClick: () => { Auth.signOut(); goto('login'); } },
+          { label: '로그아웃', variant:'primary', onClick: async () => { await Auth.signOut(); goto('login'); } },
         ],
       });
     });
@@ -261,7 +274,7 @@
         message: '정말 로그아웃 하시겠어요?',
         buttons: [
           { label: '취소', variant:'secondary' },
-          { label: '로그아웃', variant:'primary', onClick: () => { Auth.signOut(); goto('login'); } },
+          { label: '로그아웃', variant:'primary', onClick: async () => { await Auth.signOut(); goto('login'); } },
         ],
       });
     });
@@ -295,8 +308,19 @@
 
   window.App = { goto };
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const user = Auth.getUser();
+  // 세션 복원과 기록 적재는 네트워크를 타므로 그동안 잠깐 대기 화면을 보여준다
+  function renderBooting() {
+    root.innerHTML = `
+      <div class="min-h-screen flex flex-col items-center justify-center gap-3 text-gray-400">
+        <div class="w-10 h-10 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
+        <p class="text-sm">불러오는 중…</p>
+      </div>
+    `;
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    renderBooting();
+    const user = await Auth.restore();
     goto(user ? 'mode' : 'login');
   });
 })();
