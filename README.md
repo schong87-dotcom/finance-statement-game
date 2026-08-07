@@ -12,7 +12,11 @@ python3 -m http.server 5173
 # → http://127.0.0.1:5173/ 접속
 ```
 
-또는 `index.html`을 그대로 브라우저로 열어도 동작합니다 (로컬 파일 모드).
+로그인·기록 저장이 Supabase를 거치므로 `index.html`을 파일로 직접 여는 방식(`file://`)은 쓰지 마세요.
+반드시 HTTP로 서빙해야 합니다.
+
+배포 주소는 https://finance-statement-game.vercel.app 입니다.
+`main` 브랜치에 push하면 Vercel이 자동으로 배포합니다.
 
 ## 주요 기능
 
@@ -25,20 +29,40 @@ python3 -m http.server 5173
   - 데스크톱: 항목을 드래그해서 원하는 슬롯에 드롭
   - 모바일: 항목을 탭하여 선택 → 원하는 슬롯을 탭하여 배치
   - 슬롯의 항목을 탭하면 다시 좌측 목록으로 되돌아옵니다
-- **타이머 + 최고기록 저장**: localStorage에 개인 기록이 저장됩니다
+- **타이머 + 기록 저장**: 기록이 Supabase에 계정 단위로 저장되어 다른 기기·브라우저에서도 이어집니다
 
 ## 파일 구조
 
 ```
 .
 ├── index.html
+├── supabase/
+│   └── schema.sql          # game_records 테이블 + RLS 정책
 └── js/
-    ├── data.js   # 3개 게임의 항목/정답/계층 정의
-    ├── ui.js     # 공용 아이콘, 토스트, 모달
-    ├── auth.js   # 로그인 세션 및 최고기록 관리
-    ├── game.js   # 게임 화면 및 드래그/탭 로직
-    └── app.js    # 라우팅, 로그인 화면, 선택 화면
+    ├── supabase-config.js  # Supabase URL / publishable key
+    ├── data.js             # 3개 게임의 항목/정답/계층 정의
+    ├── ui.js               # 공용 아이콘, 토스트, 모달
+    ├── auth.js             # Supabase 인증 + 기록 저장 (읽기는 메모리 캐시)
+    ├── game.js             # 드래그앤드롭 게임 화면
+    ├── writing.js          # 쓰기게임 화면
+    └── app.js              # 라우팅, 로그인 화면, 선택 화면
 ```
+
+## Supabase
+
+- 프로젝트 ref: `cgkocnezpitydxrflxom` (region: 서울)
+- 기록은 `public.game_records` 한 테이블에만 쌓이고, RLS로 **본인 행만** 읽고 쓸 수 있습니다.
+- `js/supabase-config.js`의 publishable key는 브라우저에 공개되는 것이 정상입니다.
+  실제 방어선은 RLS이며, `service_role`/`secret` 키는 저장소에 절대 넣지 않습니다.
+- 스키마를 다시 적용하려면 대시보드 SQL Editor에 `supabase/schema.sql`을 붙여넣어 실행하면 됩니다
+  (여러 번 실행해도 안전합니다).
+
+### 로그인 방식
+
+화면에서는 이름+비밀번호를 받지만, 내부적으로는 이름을 UTF-8 hex로 편 뒤
+`u<hex>@fsg.local` 형태의 이메일로 바꿔 Supabase Auth에 넘깁니다.
+같은 이름은 항상 같은 계정으로 이어집니다.
+실제 이메일이 아니므로 **비밀번호 찾기는 불가능합니다** (기존과 동일한 제약).
 
 ## 원본 대비 변경 사항
 
